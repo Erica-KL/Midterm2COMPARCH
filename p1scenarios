@@ -1,16 +1,15 @@
-//!!!!!!!!https://www.cs.unc.edu/~porter/courses/comp530/f23/slides/swapping.pdf
-//!!!!!https://www.abhik.ai/concepts/memory/virtual-memory
+
 Part (a) Possible Scenarios and how memory is accessed:
 
-Random Scenario- eviction of memory at random across 256 different addresses hard to guage actual efficieny because miss rate is random.
+Random Scenario- eviction of memory at random across 256 different addresses hard to guage actual efficieny because it is random. The functionality of each as shown in with the hit rate is low and doesnt favor the NRU,NFU, or FIFO because it can not. 
 
-Multiple Localities- A center biased approach that discriminately eliminates the edges mainly while keeping the center.
+Multiple Localities- A center biased approach that discriminately eliminates the edges mainly while keeping the center. LFU will have an advantage because the center is used more frequently than the edges.
 
-Sequential - Goes from 0-256 in a cyclical manner (not very efficeint premptively)
+Sequential - Goes from 0-256 in a cyclical manner (not very efficeint premptively) 
 
-Temporal Decay- Uses the swap in swap out system of rotating pages. 
+Temporal Decay- Uses the swap in swap out system of 12 rotating pages this occurs at a specified larger interval around 333 accesses. 
 
-Hot Spot- A high percentage as assigned a lower percentage of eviction is randomized this is ensure the most accessed are prevented from getting evicted.
+Hot Spot- A high percentage as assigned a lower percentage of eviction is randomized this is ensure the most accessed are prevented from getting evicted. If only a few pages are frequently used it can work well with low cost.
 
 Part(b)
 
@@ -29,28 +28,36 @@ AMAT= Time for a hit + Miss rate x Miss penalty
 
 Part(c)
 
-FIFO (First in First out)- 
+FIFO (First in First out)- Evicts the page with the longest residency so the first in is the first to be pushed out. This could be in effective as a page that is used frequently will be treated without preferencial bias and when it is accessed again after being evicted it will cause strain on the computer.
 
 
-LRU (Least Recently Used)-  Each entry is given a timestamp
+LRU (Least Recently Used)-  Each entry is given a timestamp. The oldest timestamp is evicted. If you dont use it a lot it wont place as high a priority. Tracking entrys is costly for the hardware and temporal locality scenario is favored.
 
 
-LFU (Least Frequently Used)- Frequently used pages are less likely to get evicted. Its uses are incremented.
+LFU (Least Frequently Used)- Frequently used pages are less likely to get evicted. Its uses an incremented counter where everytime its accessed the count goes up. More frequently accessed page get a favorable bias which is good for the hotspot scenario. Unfortunately usage can change over time if someone is playing a game and they love it and play it all the time then they stop because it WAS frequently accessed it will continue to recieve favorable bias despite not being accessed as much anymore.
 
 Part(d) 
 Determining this using -
 
-AMAT-
+AMAT- the cost of access for this a lower score is prefferred.
 http://alumni.cs.ucr.edu/~vladimir/cs161/amat.pdf
 AMAT= Time for a hit + Miss rate x Miss penalty
 
-Hit Rate-
+Hit Rate- The tlb speed - is it functional? Is it being utilized well?
 HITS/ HITS + MISSES
 
-Lifespan score — 
+Lifespan score — Shows the speed the processes are ran. 100 typically means perfect while 50 and under is slower.
 (100 - avg_ns) / (100 - 5) × 100
 
 Part(e)
+Photos of debian shown in repo.
+For the hotspot scenario LFU was the clear winner
+For multiple localities LFU had an advantage however it only really became obvious in larger simulations
+For random access theres not super discernable upperhand in this simulation LFU falls short but if I ran it again LRU or FIFO could be the worse one. Its just random.
+For sequential scenario there was a major struggle for FIFO and LRU. LFU was the only one that managed and it managed poorly. 
+For temporal decay for larger programs they all managed well. When the size of the programs are lower LFU is favored but beyond that its all relatively good.
+
+Ultimately after this project I have a more favorable opinion on LFU than the others because in most cases it was average or performed better.
 
 
 
@@ -100,3 +107,6 @@ memory efficiency [15]. Many high-performance allocators
 use this concept, such as tcmalloc [16] and memcached [17
 
 //https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf
+
+//!!!!!!!!https://www.cs.unc.edu/~porter/courses/comp530/f23/slides/swapping.pdf
+//!!!!!https://www.abhik.ai/concepts/memory/virtual-memory
