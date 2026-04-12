@@ -15,7 +15,7 @@ Part(b)
 
 Faster in than out. 
 //#define HIT_NS   5     
-//#define MISS_NS  100   
+//#define MISS_NS  100   -miss is 20x slower
 
 Equation for AMAT
 http://alumni.cs.ucr.edu/~vladimir/cs161/amat.pdf
@@ -51,13 +51,18 @@ Lifespan score — Shows the speed the processes are ran. 100 typically means pe
 
 Part(e)
 Photos of debian shown in repo.
-For the hotspot scenario LFU was the clear winner
-For multiple localities LFU had an advantage however it only really became obvious in larger simulations
-For random access theres not super discernable upperhand in this simulation LFU falls short but if I ran it again LRU or FIFO could be the worse one. Its just random.
-For sequential scenario there was a major struggle for FIFO and LRU. LFU was the only one that managed and it managed poorly. 
+
+For the hotspot scenario LFU was the clear winner because the "hot" pages accumulated higher frequency counts unbenounced to FIFO. LFU had an advantage because FIFO was blind. LRU had some advantage however because there is some ranomization its less likely to keep up with LFU.
+
+For multiple localities LFU had an advantage however it only really became obvious in larger simulations there were more frequently accessed pages so LFU had less of an advantage than in the hotspot scenario.
+
+For random access theres not super discernable upperhand in this simulation LFU falls short but if I ran it again LRU or FIFO could be the worse one. Its just random it would be alarming if it favored one of them. 
+
+For sequential scenario there was a major struggle for FIFO and LRU. LFU was the only one that managed and it managed poorly. Early pages were loaded in and they could be hit which is why LFU could partially succeed but over all a struggle.
+
 For temporal decay for larger programs they all managed well. When the size of the programs are lower LFU is favored but beyond that its all relatively good.
 
-Ultimately after this project I have a more favorable opinion on LFU than the others because in most cases it was average or performed better.
+Ultimately after this project I have a more favorable opinion on LFU than the others because in most cases it was average or performed better and never performed particularly worse in any format unless it was randomized in which there is no real bias or standard for functionality.
 
 
 
@@ -70,7 +75,12 @@ Ultimately after this project I have a more favorable opinion on LFU than the ot
 
 
 
+WEBSITES Accessed but not referenced
 
+These 2 were particularly helpful in understanding the TLB
+
+//!!!!!!!!https://www.cs.unc.edu/~porter/courses/comp530/f23/slides/swapping.pdf
+//!!!!!https://www.abhik.ai/concepts/memory/virtual-memory
 
 //https://ranger.uta.edu/~jiang/publication/Conferences/2020/ICCD20-Unified-TP.pdf
 //We propose Unified-TP,
@@ -108,5 +118,4 @@ use this concept, such as tcmalloc [16] and memcached [17
 
 //https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf
 
-//!!!!!!!!https://www.cs.unc.edu/~porter/courses/comp530/f23/slides/swapping.pdf
-//!!!!!https://www.abhik.ai/concepts/memory/virtual-memory
+
