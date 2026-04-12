@@ -1,93 +1,3 @@
-//Starting
-//TLB Reffills Expense - performance counter
-
-//perf stat -e
-//  cpu/event=0x8,umask=0x84,name=dtlb_load_misses_walk_duration/,
-// cpu/event=0x8,umask=0x82,name=dtlb_load_misses_walk_completed/,
- // cpu/event=0x49,umask=0x4,name=dtlb_store_misses_walk_duration/,
- // cpu/event=0x49,umask=0x2,name=dtlb_store_misses_walk_completed/,
- // cpu/event=0x85,umask=0x4,name=itlb_misses_walk_duration/,
- // cpu/event=0x85,umask=0x2,name=itlb_misses_walk_completed/
-  //Flush each time change made to paging structures.
- // movl	%cr3,%eax
-	//movl	%eax,%cr3
-
-//https://www.cs.cornell.edu/courses/cs3110/2012sp/lectures/lec25-locality/lec25.html
-
-/*
- * tlb_bench.c  —  TLB Replacement Algorithm Benchmark
- *
- * Build:  gcc -O2 -Wall -o tlb_bench tlb_bench.c
- * Run:    ./tlb_bench
- * Tested: Kali Linux (x86-64), GCC 12+
- *
- * ── WHAT IS A TLB? ──────────────────────────────────────────────────────────
- *
- * Every memory access starts as a VIRTUAL address (what your program sees).
- * The CPU must convert it to a PHYSICAL address (where RAM actually is).
- * That mapping lives in the PAGE TABLE — but the page table is IN memory,
- * so reading it costs a full memory access just to make another memory access.
- *
- * The TLB (Translation Lookaside Buffer) is a tiny, fast hardware cache
- * that stores recently-used virtual→physical mappings.
- *
- *   TLB hit  → translation found in cache → ~5 ns
- *   TLB miss → must walk the page table   → ~100 ns  (20× slower!)
- *
- * The AMAT (Average Memory Access Time) formula tells us the cost:
- *
- *   AMAT = hit_time + miss_rate × miss_penalty
- *        = 5ns + miss_rate × 100ns
- *
- * Source: http://alumni.cs.ucr.edu/~vladimir/cs161/amat.pdf
- *
- * ── LOCALITY ────────────────────────────────────────────────────────────────
- *
- * The TLB only helps if your program has LOCALITY — the tendency to reuse
- * the same addresses. There are two kinds:
- *
- *   TEMPORAL locality: you access the same page again soon.
- *     Example: a variable in a loop body — accessed every iteration.
- *     Pros: LRU and LFU exploit this well; frequent pages stay cached.
- *     Cons: If working set > TLB size, even temporal locality can't help.
- *
- *   SPATIAL locality: you access pages NEAR ones you already used.
- *     Example: iterating through an array — consecutive elements share pages.
- *     Pros: One TLB miss loads a mapping covering multiple nearby elements.
- *     Cons: If stride > page size, spatial locality vanishes entirely.
- *
- * Source: OSTEP ch. 19  https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf
- *
- * ── THE FIVE REPLACEMENT ALGORITHMS ────────────────────────────────────────
- *
- *  FIFO    – Evict the page that has been in the TLB the longest.
- *            Simple ring buffer. No recency or frequency awareness.
- *
- *  LRU     – Evict the page NOT USED for the longest time.
- *            Approximates optimal for temporal workloads. Hardware-expensive
- *            (requires tracking access order per entry).
- *
- *  LFU     – Evict the page with the LOWEST ACCESS COUNT.
- *            Wins when hot pages have stable, long-term bias.
- *            Problem: stale high-count pages never leave ("frequency debt").
- *
- *  CLOCK   – Approximates LRU with a single "use bit" per entry.
- *            On miss: scan clockwise; clear use bits; evict first page found
- *            with use bit = 0. O(1) amortized, used in real OS kernels.
- *            Source: COMP530 slides (UNC), swapping.pdf
- *
- *  OPTIMAL – Evict the page whose NEXT USE is furthest in the future.
- *            Requires future knowledge → impossible in practice.
- *            Serves as the theoretical upper bound (Belady's algorithm).
- *
- * ── METRICS ─────────────────────────────────────────────────────────────────
- *
- *  hit_rate        = hits / (hits + misses)
- *  avg_access_ns   = (hits × HIT_NS + misses × MISS_NS) / total
- *  lifespan_score  = (MISS_NS - avg_ns) / (MISS_NS - HIT_NS) × 100
- *                    Normalized 0–100; higher = faster process completion
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,18 +80,7 @@ static void tlb_record(TLB *t, int hit) {
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ALGORITHM 1: FIFO  (First In First Out)
- *
- * The simplest algorithm. We track which slot was loaded first using
- * fifo_head as a circular pointer into the slots array.
- *
- * On miss:
- *   - If there's an empty slot, use it.
- *   - Otherwise, evict slots[fifo_head] and advance the pointer.
- *
- * Weakness: it evicts old pages regardless of whether they're still hot.
- * This makes it vulnerable to "streaming" workloads that cycle through
- * more pages than the TLB can hold — every access is a miss.
- * ══════════════════════════════════════════════════════════════════════════ */
+* ══════════════════════════════════════════════════════════════════════════ */
 static void access_fifo(TLB *t, int page) {
     int idx = tlb_find(t, page);
     if (idx >= 0) {
@@ -202,18 +101,7 @@ static void access_fifo(TLB *t, int page) {
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ALGORITHM 2: LRU  (Not Recently Used)
- *
- * Every access updates a timestamp. On eviction, we scan all slots and
- * remove the one with the smallest (oldest) timestamp.
- *
- * Real hardware uses expensive circuitry (a counter per entry or a
- * comparator tree) to implement this. Software TLB simulations often
- * use an ordered list. Here we use a linear scan — accurate but O(n).
- *
- * Key insight from OSTEP: "use the recent past as a predictor of the
- * near future." If a page was used 1 ms ago, it's more likely to be
- * used in the next 1 ms than a page unused for 1 second.
- * ══════════════════════════════════════════════════════════════════════════ */
+* ══════════════════════════════════════════════════════════════════════════ */
 static void access_lru(TLB *t, int page) {
     t->timestamp++;
     int idx = tlb_find(t, page);
@@ -243,20 +131,7 @@ static void access_lru(TLB *t, int page) {
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ALGORITHM 3: LFU  (Not Frequently Used)
- *
- * Each slot has an access counter (freq). On eviction, remove the slot
- * with the lowest count.
- *
- * LFU excels when there's a stable, long-term hot set — it quickly
- * identifies the most-accessed pages and protects them.
- *
- * Problem — "frequency debt": a page that was hot 10 seconds ago but
- * is now cold still has a high counter and won't be evicted even if
- * newer, hotter pages need the space. LFU can get "stuck."
- *
- * The Unified-TP paper (ICCD 2020) addresses this with combined
- * temporal + frequency prediction: https://ranger.uta.edu/~jiang/...
- * ══════════════════════════════════════════════════════════════════════════ */
+* ══════════════════════════════════════════════════════════════════════════ */
 static void access_lfu(TLB *t, int page) {
     int idx = tlb_find(t, page);
     if (idx >= 0) {
@@ -285,22 +160,6 @@ static void access_lfu(TLB *t, int page) {
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ALGORITHM 4: CLOCK (Second-Chance / NRU approximation)
- *
- * Hardware-friendly approximation of LRU. Each slot has a "use bit."
- * The CPU sets use_bit=1 on every TLB hit.
- *
- * On a miss, sweep clockwise starting from clock_hand:
- *   - If use_bit == 1: clear it (second chance), advance hand, keep going.
- *   - If use_bit == 0: evict this slot.
- *
- * Why this works: a page that was just used will have use_bit=1 and
- * gets at least one full revolution before eviction — closely mimicking
- * LRU behavior with much cheaper hardware.
- *
- * The UNC COMP530 slides describe the pseudocode:
- *   while (victim not found):
- *     if use_bit == 0: replace
- *     else: clear use_bit, advance hand
  * ══════════════════════════════════════════════════════════════════════════ */
 static void access_clock(TLB *t, int page) {
     int idx = tlb_find(t, page);
@@ -339,17 +198,6 @@ static void access_clock(TLB *t, int page) {
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ALGORITHM 5: OPTIMAL (Belady's Algorithm)
- *
- * The gold standard — evicts the page whose NEXT USE is furthest in
- * the future. If a page is never used again, it's evicted first.
- *
- * Requires the complete future reference string. We pass refs[] and the
- * current position so we can scan forward.
- *
- * This is NOT implementable in a real OS (you'd need to predict the
- * future), but it gives us the theoretical minimum miss rate — the
- * "gap" between any real algorithm and OPTIMAL shows how much
- * room for improvement exists.
  * ══════════════════════════════════════════════════════════════════════════ */
 static void access_optimal(TLB *t, int page, const int *refs, int pos, int n) {
     int idx = tlb_find(t, page);
