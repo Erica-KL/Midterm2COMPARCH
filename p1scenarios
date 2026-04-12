@@ -1,0 +1,102 @@
+//!!!!!!!!https://www.cs.unc.edu/~porter/courses/comp530/f23/slides/swapping.pdf
+//!!!!!https://www.abhik.ai/concepts/memory/virtual-memory
+Part (a) Possible Scenarios and how memory is accessed:
+
+Random Scenario- eviction of memory at random across 256 different addresses hard to guage actual efficieny because miss rate is random.
+
+Multiple Localities- A center biased approach that discriminately eliminates the edges mainly while keeping the center.
+
+Sequential - Goes from 0-256 in a cyclical manner (not very efficeint premptively)
+
+Temporal Decay- Uses the swap in swap out system of rotating pages. 
+
+Hot Spot- A high percentage as assigned a lower percentage of eviction is randomized this is ensure the most accessed are prevented from getting evicted.
+
+Part(b)
+
+Faster in than out. 
+//#define HIT_NS   5     
+//#define MISS_NS  100   
+
+Equation for AMAT
+http://alumni.cs.ucr.edu/~vladimir/cs161/amat.pdf
+AMAT= Time for a hit + Miss rate x Miss penalty
+
+3 Different Sizes for TLB
+-4
+-16
+-64
+
+Part(c)
+
+FIFO (First in First out)- 
+
+
+LRU (Least Recently Used)-  Each entry is given a timestamp
+
+
+LFU (Least Frequently Used)- Frequently used pages are less likely to get evicted. Its uses are incremented.
+
+Part(d) 
+Determining this using -
+
+AMAT-
+http://alumni.cs.ucr.edu/~vladimir/cs161/amat.pdf
+AMAT= Time for a hit + Miss rate x Miss penalty
+
+Hit Rate-
+HITS/ HITS + MISSES
+
+Lifespan score — 
+(100 - avg_ns) / (100 - 5) × 100
+
+Part(e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//https://ranger.uta.edu/~jiang/publication/Conferences/2020/ICCD20-Unified-TP.pdf
+//We propose Unified-TP,
+which is a novel structure that can mitigate the cost of large
+number of memory accesses. Unified-TP unifies TLBs and
+PTCs to improve cache efficiency and to adapt to different
+workloads. Besides, we provide a parallel search scheme to
+improve the performance of checking entries when a memory
+access request is sent. 
+//https://lwn.net/Articles/379748/
+Here the TLB-miss cost on PPC64 is observed to be much higher than on comparable X86 hardware. However, take into account that the ERAT translation cache hides most of the cost translating addresses and it's miss cost is comparable. This is similar in principal to having two levels of TLB.
+While virtual memory is an unparalleled success in engineering terms, it is not totally free. Despite multiple page sizes being available for over a decade, support within Linux was historically tricky to use and avoided by even skilled system administrators. Over the last number of years, effort within the community has brought huge pages to the point where they are relatively painless to configure and use with applications, even to the point of requiring no source level modifications to the applications. Using modern tools, it was shown that performance can be improved with minimal effort and a high degree of reliability.
+//https://apps.dtic.mil/sti/tr/pdf/ADA632163.pdf
+3.2.3. Variants of basic algorithms
+Algorithm PTE-firs(, TLB-first', and optimistic' are asynchronous versions
+of the corresponding basic algorithms. Algorithm 2-phase has no asynchronous
+version because the request cannot update the PTE until all repliers have ack-
+nowledged. Since the modifications are similar for the three algorithms, only
+algorithm optimistic' is shown here. The requester initializes a counter to the
+number of repliers. Each replier, after flushing its TLB, decreases the counter
+by one. The last replier signals the end of the algorithm.
+//https://web.njit.edu/~dingxn/papers/ispa20.pdf
+ 4.3 Size-Class-Based Memory Management
+Some allocators do not use arenas at all. Instead, they
+use per-thread caches which consist of a series of bins
+containing a list of chunks of fixed size classes, which are
+replenished in batches from a central heap. Memory is very
+coarsely returned to the system (based on hysteresis) since
+each size class must retain some padding. While this concept
+exhibits excellent performance, it is known to be especially
+susceptible to fragmentation since freed chunks can only be
+recycled by allocations of the same size class, leading to low
+memory efficiency [15]. Many high-performance allocators
+use this concept, such as tcmalloc [16] and memcached [17
+
+//https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf
